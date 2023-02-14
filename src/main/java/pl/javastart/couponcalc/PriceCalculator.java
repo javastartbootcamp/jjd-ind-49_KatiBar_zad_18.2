@@ -9,30 +9,46 @@ public class PriceCalculator {
     public double calculatePrice(List<Product> products, List<Coupon> coupons) {
         if (products == null || products.isEmpty()) {
             return 0;
-        }
-
-        if (coupons == null || coupons.isEmpty()) {
+        } else if (coupons == null || coupons.isEmpty()) {
             return products.stream()
                     .map(Product::getPrice)
                     .reduce(Double::sum)
                     .get();
+        } else {
+            return getSumProductsWithCoupons(products, coupons);
         }
+    }
 
-        if (coupons.size() == 1) {
-            Category couponCategory = coupons.get(0).getCategory();
-            int discountValueInPercents = coupons.get(0).getDiscountValueInPercents();
+    private static double getSumProductsWithCoupons(List<Product> products, List<Coupon> coupons) {
+        int couponsNumber = coupons.size();
+        double[] sumForEachCouponArray = new double[couponsNumber];
+        int sumIndex = 0;
+
+        for (Coupon coupon : coupons) {
+            Category couponCategory = coupon.getCategory();
+            int discountValueInPercents = coupon.getDiscountValueInPercents();
             double discountValueDecimal = discountValueInPercents * 0.01;
-            Double productPriceWithDiscount = products.stream()
-                    .filter(x -> x.getCategory().equals(couponCategory))
-                    .map(Product::getPrice)
-                    .map(x -> x - (x * discountValueDecimal))
-                    .reduce(Double::sum)
-                    .get();
 
-            return round(productPriceWithDiscount);
+            for (Product product : products) {
+                double price;
+                if (couponCategory == null || couponCategory.equals(product.getCategory())) {
+                    price = product.getPrice() * (1 - discountValueDecimal);
+
+                } else {
+                    price = product.getPrice();
+                }
+                sumForEachCouponArray[sumIndex] += price;
+            }
+            sumIndex++;
         }
 
-        return 0;
+        double min = sumForEachCouponArray[0];
+        for (int i = 0; i < sumForEachCouponArray.length; i++) {
+            if (sumForEachCouponArray[i] < min) {
+                min = sumForEachCouponArray[i];
+            }
+        }
+        return round(min);
     }
 
     public static double round(double value) {
@@ -41,5 +57,4 @@ public class PriceCalculator {
         bigDecimal = bigDecimal.setScale(precision, RoundingMode.HALF_UP);
         return bigDecimal.doubleValue();
     }
-
 }

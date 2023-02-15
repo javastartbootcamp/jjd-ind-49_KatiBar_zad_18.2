@@ -20,35 +20,37 @@ public class PriceCalculator {
     }
 
     private static double getSumProductsWithCoupons(List<Product> products, List<Coupon> coupons) {
-        int couponsNumber = coupons.size();
-        double[] sumForEachCouponArray = new double[couponsNumber];
         int sumIndex = 0;
+        double min = 0;
 
         for (Coupon coupon : coupons) {
-            Category couponCategory = coupon.getCategory();
-            int discountValueInPercents = coupon.getDiscountValueInPercents();
-            double discountValueDecimal = discountValueInPercents * 0.01;
+            double sum = getSum(products, coupon);
 
-            for (Product product : products) {
-                double price;
-                if (couponCategory == null || couponCategory.equals(product.getCategory())) {
-                    price = product.getPrice() * (1 - discountValueDecimal);
-
-                } else {
-                    price = product.getPrice();
-                }
-                sumForEachCouponArray[sumIndex] += price;
+            if (sumIndex == 0 || sum < min) {
+                min = sum;
             }
             sumIndex++;
         }
-
-        double min = sumForEachCouponArray[0];
-        for (int i = 0; i < sumForEachCouponArray.length; i++) {
-            if (sumForEachCouponArray[i] < min) {
-                min = sumForEachCouponArray[i];
-            }
-        }
         return round(min);
+    }
+
+    private static double getSum(List<Product> products, Coupon coupon) {
+        Category couponCategory = coupon.getCategory();
+        int discountValueInPercents = coupon.getDiscountValueInPercents();
+        double discountValueDecimal = discountValueInPercents * 0.01;
+
+        double sum = 0;
+        for (Product product : products) {
+            double price;
+            if (couponCategory == null || couponCategory.equals(product.getCategory())) {
+                price = product.getPrice() * (1 - discountValueDecimal);
+
+            } else {
+                price = product.getPrice();
+            }
+            sum += price;
+        }
+        return sum;
     }
 
     public static double round(double value) {
